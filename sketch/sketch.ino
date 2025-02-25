@@ -1,5 +1,5 @@
 int dc_sensorPin = A0; // Analog pin connected to the voltage sensor
-int ac_sensorPin = A1;
+int ac_sensorPin = A1; // Voltage sensor for the load
 int relayPin = 7;   // Digital pin connected to the relay (simulating circuit breaker)
 float voltageThreshold = 4.5; // Voltage threshold to trip the circuit (adjust as needed)
 bool circuitTripped = false; // Flag to indicate if the circuit has been tripped
@@ -15,14 +15,14 @@ void loop() {
   int dc_sensorValue = analogRead(dc_sensorPin);
   float dc_voltage = (dc_sensorValue * 5.0) / 1023.0; // Calculate voltage based on 5V Arduino reference
 
-  Serial.print("Measured Voltage: ");
+  Serial.print("Measured DC Voltage: ");
   Serial.println(dc_voltage);
 
   // AC sensor
   int ac_sensorValue = analogRead(ac_sensorPin);
   float ac_voltage = (ac_sensorValue * 5.0) / 1023.0; // Calculate voltage based on 5V Arduino reference
 
-  Serial.print("Measured Voltage: ");
+  Serial.print("Measured AC Voltage: ");
   Serial.println(ac_voltage);
 
   //SSR Circuit Breaker Logic
