@@ -15,27 +15,45 @@ void loop() {
   int dc_sensorValue = analogRead(dc_sensorPin);
   float dc_voltage = (dc_sensorValue * 5.0) / 1023.0; // Calculate voltage based on 5V Arduino reference
 
-  Serial.print("Measured DC Voltage: ");
+  Serial.print("Measured Voltage: ");
   Serial.println(dc_voltage);
 
   // AC sensor
   int ac_sensorValue = analogRead(ac_sensorPin);
   float ac_voltage = (ac_sensorValue * 5.0) / 1023.0; // Calculate voltage based on 5V Arduino reference
 
-  Serial.print("Measured AC Voltage: ");
+  Serial.print("Measured Voltage: ");
   Serial.println(ac_voltage);
 
-  //SSR Circuit Breaker Logic
+  // SSR Circuit Breaker Auto Trip Logic
   if (voltage > voltageThreshold && !circuitTripped) {
     Serial.println("Overvoltage detected! Tripping circuit.");
     digitalWrite(relayPin, LOW); // Open the relay (trip the circuit)
     circuitTripped = true;      // Set the flag so it doesn't keep tripping
-    Serial.println("Circuit tripped.  Requires reset (reboot Arduino).");
+    Serial.println("Circuit tripped.");
   }
   else if (voltage <= voltageThreshold && circuitTripped)
   {
     Serial.println("Voltage normalized! Circuit would still require reset.");
   }
 
+  // SSR Circuit Breaker Manual Trip Logic
+  if(Serial.available() > 0)
+  {
+    Incoming_value = Serial.read();
+    Serial.print(Incoming_value);
+    Serial.print("\n");
+    if(Incoming_value == '1')
+    {
+      digitalWrite(relayPin, HIGH);
+    }
+    else if(Incoming_value == '0')
+    {
+      Serial.println("Tripping circuit.");
+      digitalWrite(relayPin, LOW); // Open the relay (trip the circuit)
+      circuitTripped = true;      // Set the flag so it doesn't keep tripping
+      Serial.println("Circuit tripped.");
+    }
+  }
     delay(100); // Reduced Delay
 }
