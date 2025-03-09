@@ -1,3 +1,5 @@
+#include <SoftwareSerial.h>
+
 int dc_sensorPin = A0;
 int ac_sensorPin = A1;
 int relayPin = 7;
@@ -19,8 +21,11 @@ int sampleIndex = 0;
 unsigned long lastSampleTime = 0;
 const unsigned long sampleInterval = 2; // Sample every 2 milliseconds (adjust for your AC frequency)
 
+// bluetooth serial
+SoftwareSerial BTSerial(0, 1);
+
 void setup() {
-  Serial.begin(9600);
+  BTSerial.begin(9600);
   pinMode(relayPin, OUTPUT);
   digitalWrite(relayPin, HIGH); // Circuit is initially ON
 }
@@ -29,10 +34,10 @@ void loop() {
   // DC Voltage Measurement
   int dc_sensorValue = analogRead(dc_sensorPin);
   float dc_voltage = (dc_sensorValue * dcVoltageSlope) + dcVoltageIntercept;  // Calibrated voltage
-  Serial.print("Measured DC Voltage: ");
-  Serial.println(dc_voltage);
+  BTSerial.print("Measured DC Voltage: ");
+  BTSerial.println(dc_voltage);
 
-    // AC Voltage Measurement (RMS)
+  // AC Voltage Measurement (RMS)
   if (millis() - lastSampleTime >= sampleInterval) {
     lastSampleTime = millis();
     acSamples[sampleIndex] = analogRead(ac_sensorPin);
@@ -46,36 +51,48 @@ void loop() {
         float centeredVoltage = ((acSamples[i] * acVoltageSlope) + acVoltageIntercept) - 2.5;
         sumSquares += (centeredVoltage * centeredVoltage);
       }
-        float ac_voltage = sqrt(sumSquares / numSamples);
-        Serial.print("Measured AC Voltage (RMS): ");
-        Serial.println(ac_voltage);
+      float ac_voltage = sqrt(sumSquares / numSamples);
+      BTSerial.print("Measured AC Voltage (RMS): ");
+      BTSerial.println(ac_voltage);
     }
   }
 
   // Manual Trip/Reset
-  if (Serial.available() > 0) {
-    char incomingCommand = Serial.read();
+  if (BTSerial.available() > 0) {
+    char incomingCommand = BTSerial.read();
 
+    if (incomingCommand == 'T' && !circuitTripped) { // TRIP
+      BTSerial.println("Tripping circuit manually.");
+      digitalWrite(relayPin, LOW); // Open the relay (trip the circuit)
+      circuitTripped = true;      // Set the flag so it doesn't keep tripping
+      BTSerial.println("Circuit tripped.");
+    } else if (incomingCommand == 'R') { // RESET
+      BTSerial.println("Resetting circuit manually.");
+      digitalWrite(relayPin, HIGH); // close the relay (reset the circuit)
+      circuitTripped = false;      //reset tripped flag
+      BTSerial.println("Circuit reenabled");
+    } else {
+      BTSerial.println("Invalid command.");
+    }
+
+    while (BTSerial.available() > 0) { //clear the input buffer.
+      BTSerial.read();
+    }
   }
+
   // Automatic tripping logic (add to loop)
-    if (!circuitTripped)
-    {
-        if (dc_voltage > dcVoltageThreshold || ac_voltage > acVoltageThreshold)
-        {
-            Serial.println("Overvoltage detected!");
-            digitalWrite(relayPin, LOW); //trip
-            delay(200); //prevent fast switching.
-            circuitTripped = true;
-            Serial.println("Circuit tripped.");
-        }
+  if (!circuitTripped) {
+    if (dc_voltage > dcVoltageThreshold || ac_voltage > acVoltageThreshold) {
+      BTSerial.println("Overvoltage detected!");
+      digitalWrite(relayPin, LOW); //trip
+      circuitTripped = true;
+      BTSerial.println("Circuit tripped.");
     }
-    else if (dc_voltage < dcVoltageThreshold - hysteresis && ac_voltage < acVoltageThreshold - hysteresis)
-    {
-        Serial.println("Voltage is back to normal");
-        digitalWrite(relayPin, HIGH);
-        delay(200); //prevent fast switching.
-        circuitTripped = false;
-        Serial.println("Circuit is reenabled");
-    }
+  } else if (dc_voltage < dcVoltageThreshold - hysteresis && ac_voltage < acVoltageThreshold - hysteresis) {
+    BTSerial.println("Voltage is back to normal");
+    digitalWrite(relayPin, HIGH);
+    circuitTripped = false;
+    BTSerial.println("Circuit is reenabled");
+  }
   delay(1); // Very short delay for ADC stability
 }
