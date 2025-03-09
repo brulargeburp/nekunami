@@ -19,7 +19,6 @@ int sampleIndex = 0;
 unsigned long lastSampleTime = 0;
 const unsigned long sampleInterval = 2; // Sample every 2 milliseconds (adjust for your AC frequency)
 
-
 void setup() {
   Serial.begin(9600);
   pinMode(relayPin, OUTPUT);
