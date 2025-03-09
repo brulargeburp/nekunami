@@ -19,9 +19,6 @@ int sampleIndex = 0;
 unsigned long lastSampleTime = 0;
 const unsigned long sampleInterval = 2; // Sample every 2 milliseconds (adjust for your AC frequency)
 
-// Debouncing-related variables (simplified, since we're using serial)
-unsigned long lastCommandTime = 0;
-const unsigned long debounceDelay = 200; // Debounce time in milliseconds. Increased to 200ms
 
 void setup() {
   Serial.begin(9600);
@@ -60,32 +57,6 @@ void loop() {
   if (Serial.available() > 0) {
     char incomingCommand = Serial.read();
 
-    // Check debounce time
-    if (millis() - lastCommandTime >= debounceDelay) {
-        lastCommandTime = millis(); //update time
-
-        if (incomingCommand == 'T' && !circuitTripped) { // TRIP
-          Serial.println("Tripping circuit.");
-          digitalWrite(relayPin, LOW);
-            delay(200); //prevent fast switching.
-          circuitTripped = true;
-          Serial.println("Circuit tripped.");
-        } else if (incomingCommand == 'R') { // RESET
-          Serial.println("Resetting circuit.");
-          digitalWrite(relayPin, HIGH);
-            delay(200); //prevent fast switching.
-          circuitTripped = false;
-          Serial.println("Circuit reset.");
-        }
-        else
-        {
-            Serial.println("Invalid command.");
-        }
-    }
-        while(Serial.available() > 0) //clear the input buffer.
-        {
-            Serial.read();
-        }
   }
   // Automatic tripping logic (add to loop)
     if (!circuitTripped)
