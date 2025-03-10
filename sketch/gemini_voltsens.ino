@@ -1,25 +1,19 @@
 #include <SoftwareSerial.h>
 
-int dc_sensorPin = A0;
-int ac_sensorPin = A1;
+int dcLoad_sensorPin = A0; // DC Load sensor on A0
+int dcArduino_sensorPin = A1; // DC Arduino sensor on A1 (replacing AC sensor)
 int relayPin = 7;
-float dcVoltageThreshold = 4.5; // Example
-float acVoltageThreshold = 1.0; // Example
-float hysteresis = 0.5;        // Example
+float dcLoadVoltageThreshold = 4.5; // Example threshold for load voltage
+float dcArduinoVoltageThreshold = 4.5; // Example threshold for arduino voltage
+float hysteresis = 0.5;        // Example hysteresis value
 bool circuitTripped = false;
 
 // Calibration values (replace with your actual calibration data)
-float dcVoltageSlope = 0.0049;  // Example: slope from calibration
-float dcVoltageIntercept = 0.0;  // Example: intercept from calibration
+float dcLoad_VoltageSlope = 0.0049;  // Example: slope from calibration for the load sensor
+float dcLoad_VoltageIntercept = 0.0;  // Example: intercept from calibration for the load sensor
 
-float acVoltageSlope = 0.0049;  // Example: slope from calibration
-float acVoltageIntercept = 0.0;  // Example: intercept from calibration
-
-const int numSamples = 50; // Number of samples for AC RMS
-int acSamples[numSamples];
-int sampleIndex = 0;
-unsigned long lastSampleTime = 0;
-const unsigned long sampleInterval = 2; // Sample every 2 milliseconds (adjust for your AC frequency)
+float dcArduino_VoltageSlope = 0.0049;  // Example: slope from calibration for the arduino sensor
+float dcArduino_VoltageIntercept = 0.0;  // Example: intercept from calibration for the arduino sensor
 
 // bluetooth serial
 SoftwareSerial BTSerial(0, 1);
@@ -31,31 +25,17 @@ void setup() {
 }
 
 void loop() {
-  // DC Voltage Measurement
-  int dc_sensorValue = analogRead(dc_sensorPin);
-  float dc_voltage = (dc_sensorValue * dcVoltageSlope) + dcVoltageIntercept;  // Calibrated voltage
-  BTSerial.print("Measured DC Voltage: ");
-  BTSerial.println(dc_voltage);
+  // DC Load Voltage Measurement
+  int dcLoad_sensorValue = analogRead(dcLoad_sensorPin);
+  float dcLoad_voltage = (dcLoad_sensorValue * dcLoad_VoltageSlope) + dcLoad_VoltageIntercept;  // Calibrated voltage
+  BTSerial.print("Measured DC Load Voltage: ");
+  BTSerial.println(dcLoad_voltage);
 
-  // AC Voltage Measurement (RMS)
-  if (millis() - lastSampleTime >= sampleInterval) {
-    lastSampleTime = millis();
-    acSamples[sampleIndex] = analogRead(ac_sensorPin);
-    sampleIndex++;
-
-    if (sampleIndex >= numSamples) {
-      sampleIndex = 0;
-      float sumSquares = 0;
-      for (int i = 0; i < numSamples; i++) {
-        // Convert to voltage, center, and calculate squares
-        float centeredVoltage = ((acSamples[i] * acVoltageSlope) + acVoltageIntercept) - 2.5;
-        sumSquares += (centeredVoltage * centeredVoltage);
-      }
-      float ac_voltage = sqrt(sumSquares / numSamples);
-      BTSerial.print("Measured AC Voltage (RMS): ");
-      BTSerial.println(ac_voltage);
-    }
-  }
+  // DC Arduino Voltage Measurement
+  int dcArduino_sensorValue = analogRead(dcArduino_sensorPin);
+  float dcArduino_voltage = (dcArduino_sensorValue * dcArduino_VoltageSlope) + dcArduino_VoltageIntercept;
+  BTSerial.print("Measured DC Arduino Voltage: ");
+  BTSerial.println(dcArduino_voltage);
 
   // Manual Trip/Reset
   if (BTSerial.available() > 0) {
@@ -82,13 +62,13 @@ void loop() {
 
   // Automatic tripping logic (add to loop)
   if (!circuitTripped) {
-    if (dc_voltage > dcVoltageThreshold || ac_voltage > acVoltageThreshold) {
+    if (dcLoad_voltage > dcLoadVoltageThreshold || dcArduino_voltage > dcArduinoVoltageThreshold) {
       BTSerial.println("Overvoltage detected!");
       digitalWrite(relayPin, LOW); //trip
       circuitTripped = true;
       BTSerial.println("Circuit tripped.");
     }
-  } else if (dc_voltage < dcVoltageThreshold - hysteresis && ac_voltage < acVoltageThreshold - hysteresis) {
+  } else if (dcLoad_voltage < dcLoadVoltageThreshold - hysteresis && dcArduino_voltage < dcArduinoVoltageThreshold - hysteresis) {
     BTSerial.println("Voltage is back to normal");
     digitalWrite(relayPin, HIGH);
     circuitTripped = false;
