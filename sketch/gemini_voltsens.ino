@@ -8,6 +8,14 @@ float dcArduinoVoltageThreshold = 4.5; // Example threshold for arduino voltage
 float hysteresis = 0.5;        // Example hysteresis value
 bool circuitTripped = false;
 
+// LED Pins
+int red_pin = 11;
+int blue_pin = 10;
+int green_pin = 9;
+analogWrite(red_pin, 255 - red);
+analogWrite(green_pin, 255 - green);
+analogWrite(blue_pin, 255 - blue);
+
 // Calibration values (replace with your actual calibration data)
 float dcLoad_VoltageSlope = 0.0049;  // Example: slope from calibration for the load sensor
 float dcLoad_VoltageIntercept = 0.0;  // Example: intercept from calibration for the load sensor
@@ -28,13 +36,11 @@ void loop() {
   // DC Load Voltage Measurement
   int dcLoad_sensorValue = analogRead(dcLoad_sensorPin);
   float dcLoad_voltage = (dcLoad_sensorValue * dcLoad_VoltageSlope) + dcLoad_VoltageIntercept;  // Calibrated voltage
-  BTSerial.print("Measured DC Load Voltage: ");
   BTSerial.println(dcLoad_voltage);
 
   // DC Arduino Voltage Measurement
   int dcArduino_sensorValue = analogRead(dcArduino_sensorPin);
   float dcArduino_voltage = (dcArduino_sensorValue * dcArduino_VoltageSlope) + dcArduino_VoltageIntercept;
-  BTSerial.print("Measured DC Arduino Voltage: ");
   BTSerial.println(dcArduino_voltage);
 
   // Manual Trip/Reset
@@ -42,15 +48,11 @@ void loop() {
     char incomingCommand = BTSerial.read();
 
     if (incomingCommand == 'T' && !circuitTripped) { // TRIP
-      BTSerial.println("Tripping circuit manually.");
       digitalWrite(relayPin, LOW); // Open the relay (trip the circuit)
       circuitTripped = true;      // Set the flag so it doesn't keep tripping
-      BTSerial.println("Circuit tripped.");
     } else if (incomingCommand == 'R') { // RESET
-      BTSerial.println("Resetting circuit manually.");
       digitalWrite(relayPin, HIGH); // close the relay (reset the circuit)
       circuitTripped = false;      //reset tripped flag
-      BTSerial.println("Circuit reenabled");
     } else {
       BTSerial.println("Invalid command.");
     }
