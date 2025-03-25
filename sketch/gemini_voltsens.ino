@@ -2,8 +2,7 @@
 
 int dcLoad_sensorPin = A0; // DC Load sensor on A0
 int dcArduino_sensorPin = A1; // DC Arduino sensor on A1 (replacing AC sensor)
-int relayPin = 7;
-//int potenPin = A2; // Potentiometer connected to A2 (Removed)
+int relayPin = 2;
 bool circuitTripped = false;
 
 // Calibration values (replace with your actual calibration data)
@@ -16,14 +15,12 @@ float dcArduino_VoltageIntercept = 0.0;  // Example: intercept from calibration 
 // bluetooth serial
 SoftwareSerial BTSerial(0, 1);
 
-// Potentiometer related variables (Removed)
-//float potenVoltage = 0.0; // Voltage read from the potentiometer
-//float potenMaxVoltage = 5.0; // Maximum voltage from the potentiometer (assuming 5V reference)
-//float potenMinVoltage = 0.0; // Minimum voltage from the potentiometer
-//float potenScaleFactor = 1.0; // Scale factor to adjust the potentiometer's effect (adjust as needed)
+// Voltage threshold for automatic circuit closure
+float autoCloseVoltageThreshold = 3.5; // Set the threshold to 3.5V
 
 void setup() {
   BTSerial.begin(9600);
+  Serial.begin(9600);
   pinMode(relayPin, OUTPUT);
   digitalWrite(relayPin, HIGH); // Circuit is initially ON
 }
@@ -34,7 +31,9 @@ void loop() {
   float dcLoad_voltage = (dcLoad_sensorValue * dcLoad_VoltageSlope) + dcLoad_VoltageIntercept;  // Calibrated voltage
   BTSerial.print("Load Voltage: ");
   BTSerial.println(dcLoad_voltage);
-  Serial.print("Load ADC: "); 
+  Serial.print("Load Voltage: ");
+  Serial.println(dcLoad_voltage);
+  Serial.print("Load ADC: ");
   Serial.println(dcLoad_sensorValue);
 
   // DC Arduino Voltage Measurement
@@ -42,14 +41,18 @@ void loop() {
   float dcArduino_voltage = (dcArduino_sensorValue * dcArduino_VoltageSlope) + dcArduino_VoltageIntercept;
   BTSerial.print("Arduino Voltage: ");
   BTSerial.println(dcArduino_voltage);
+  Serial.print("Load Voltage: ");
+  Serial.println(dcLoad_voltage);
   Serial.print("Arduino ADC: ");
   Serial.println(dcArduino_sensorValue);
 
-  // Potentiometer Reading and Scaling (Removed)
-  //int potenValue = analogRead(potenPin);
-  //potenVoltage = (potenValue * potenMaxVoltage) / 1023.0; // Convert analog reading to voltage
-  //BTSerial.print("Potentiometer Voltage: ");
-  //BTSerial.println(potenVoltage);
+  // Automatic Circuit Closure Logic
+  if (circuitTripped && dcArduino_voltage >= autoCloseVoltageThreshold) {
+    digitalWrite(relayPin, HIGH); // Close the relay (reset the circuit)
+    circuitTripped = false;      // Reset tripped flag
+    BTSerial.println("Circuit Auto-Closed (Voltage above threshold)");
+    Serial.println("Circuit Auto-Closed (Voltage above threshold)");
+  }
 
   // Manual Trip/Reset
   if (BTSerial.available() > 0) {
