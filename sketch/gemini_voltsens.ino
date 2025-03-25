@@ -30,21 +30,23 @@ void loop() {
   int dcLoad_sensorValue = analogRead(dcLoad_sensorPin);
   float dcLoad_voltage = (dcLoad_sensorValue * dcLoad_VoltageSlope) + dcLoad_VoltageIntercept;  // Calibrated voltage
   BTSerial.print("Load Voltage: ");
-  BTSerial.println(dcLoad_voltage);
-  Serial.print("Load Voltage: ");
-  Serial.println(dcLoad_voltage);
-  Serial.print("Load ADC: ");
-  Serial.println(dcLoad_sensorValue);
+  BTSerial.print(dcLoad_voltage);
+  BTSerial.print("|")
+  //Serial.print("Load Voltage: ");
+  //Serial.println(dcLoad_voltage);
+  //Serial.print("Load ADC: ");
+  //Serial.println(dcLoad_sensorValue);
 
   // DC Arduino Voltage Measurement
   int dcArduino_sensorValue = analogRead(dcArduino_sensorPin);
   float dcArduino_voltage = (dcArduino_sensorValue * dcArduino_VoltageSlope) + dcArduino_VoltageIntercept;
   BTSerial.print("Arduino Voltage: ");
-  BTSerial.println(dcArduino_voltage);
-  Serial.print("Load Voltage: ");
-  Serial.println(dcLoad_voltage);
-  Serial.print("Arduino ADC: ");
-  Serial.println(dcArduino_sensorValue);
+  BTSerial.print(dcArduino_voltage);
+  BTSerial.println("|")
+  //Serial.print("Load Voltage: ");
+  //Serial.println(dcLoad_voltage);
+  //Serial.print("Arduino ADC: ");
+  //Serial.println(dcArduino_sensorValue);
 
   // Automatic Circuit Closure Logic
   if (circuitTripped && dcArduino_voltage >= autoCloseVoltageThreshold) {
