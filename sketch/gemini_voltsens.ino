@@ -34,16 +34,16 @@ void loop() {
   float dcLoad_voltage = (dcLoad_sensorValue * dcLoad_VoltageSlope) + dcLoad_VoltageIntercept;  // Calibrated voltage
   BTSerial.print("Load Voltage: ");
   BTSerial.println(dcLoad_voltage);
-  BTSerial.print("Load ADC: "); 
-  BTSerial.println(dcLoad_sensorValue);
+  Serial.print("Load ADC: "); 
+  Serial.println(dcLoad_sensorValue);
 
   // DC Arduino Voltage Measurement
   int dcArduino_sensorValue = analogRead(dcArduino_sensorPin);
   float dcArduino_voltage = (dcArduino_sensorValue * dcArduino_VoltageSlope) + dcArduino_VoltageIntercept;
   BTSerial.print("Arduino Voltage: ");
   BTSerial.println(dcArduino_voltage);
-  BTSerial.print("Arduino ADC: ");
-  BTSerial.println(dcArduino_sensorValue);
+  Serial.print("Arduino ADC: ");
+  Serial.println(dcArduino_sensorValue);
 
   // Potentiometer Reading and Scaling (Removed)
   //int potenValue = analogRead(potenPin);
