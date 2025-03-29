@@ -22,14 +22,11 @@ void setup() {
   //while (!Serial);
   //BTSerial.begin(9600); // Initialize BTSerial
   Serial.begin(9600);
-  Serial.println("a");
   pinMode(relayPin, OUTPUT);
   digitalWrite(relayPin, HIGH); // Circuit is initially ON
-  Serial.println("a");
 }
 
 void loop() {
-  Serial.println("a");
   // DC Load Voltage Measurement
   int dcLoad_sensorValue = analogRead(dcLoad_sensorPin);
   float dcLoad_voltage = (dcLoad_sensorValue * dcLoad_VoltageSlope) + dcLoad_VoltageIntercept;  // Calibrated voltage
