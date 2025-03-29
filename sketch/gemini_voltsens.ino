@@ -31,7 +31,8 @@ void loop() {
   int dcLoad_sensorValue = analogRead(dcLoad_sensorPin);
   float dcLoad_voltage = (dcLoad_sensorValue * dcLoad_VoltageSlope) + dcLoad_VoltageIntercept;  // Calibrated voltage
   Serial.print("Load Voltage: ");
-  Serial.println(dcLoad_voltage);
+  Serial.print(dcLoad_voltage);
+  Serial.print("|");
 
   // DC Arduino Voltage Measurement
   int dcArduino_sensorValue = analogRead(dcArduino_sensorPin);
@@ -50,11 +51,11 @@ void loop() {
   if (Serial.available() > 0) {
     char incomingCommand = Serial.read();
 
-    if (incomingCommand == 'T' && !circuitTripped) { // TRIP
+    if (incomingCommand == '0' && !circuitTripped) { // TRIP
       digitalWrite(relayPin, LOW); // Open the relay (trip the circuit)
       circuitTripped = true;      // Set the flag so it doesn't keep tripping
       Serial.println("Circuit Tripped Manually");
-    } else if (incomingCommand == 'R') { // RESET
+    } else if (incomingCommand == '1') { // RESET
       digitalWrite(relayPin, HIGH); // close the relay (reset the circuit)
       circuitTripped = false;      //reset tripped flag
       Serial.println("Circuit Reset Manually");
