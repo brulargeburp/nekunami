@@ -68,24 +68,5 @@ void loop() {
     }
   }
 
-  /* Bluetooth communication
-  if (BTSerial.available() > 0) {
-    char incomingBTCommand = BTSerial.read();
-    Serial.print("Received from BT: ");
-    Serial.println(incomingBTCommand);
-
-    // Example: Control the relay from Bluetooth
-    if (incomingBTCommand == 'T' && !circuitTripped) {
-      digitalWrite(relayPin, LOW);
-      circuitTripped = true;
-      Serial.println("Circuit Tripped via Bluetooth");
-    } else if (incomingBTCommand == 'R') {
-      digitalWrite(relayPin, HIGH);
-      circuitTripped = false;
-      Serial.println("Circuit Reset via Bluetooth");
-    }
-  }
-  */
-
   delay(100); // Increased delay for better readability and stability.
 }
