@@ -1,5 +1,3 @@
-//#include <SoftwareSerial.h>
-
 int dcLoad_sensorPin = A0; // DC Load sensor on A0
 int dcArduino_sensorPin = A1; // DC Arduino sensor on A1 (replacing AC sensor)
 int relayPin = 2;
@@ -12,15 +10,10 @@ float dcLoad_VoltageIntercept = 0.0;  // Example: intercept from calibration for
 float dcArduino_VoltageSlope = 0.02445;  // Example: slope from calibration for the arduino sensor
 float dcArduino_VoltageIntercept = 0.0;  // Example: intercept from calibration for the arduino sensor
 
-// bluetooth serial
-//SoftwareSerial BTSerial(3, 4); // RX, TX - Use different pins than Serial!
-
 // Voltage threshold for automatic circuit closure
 float autoCloseVoltageThreshold = 6.0; // Set the threshold to 3.5V
 
 void setup() {
-  //while (!Serial);
-  //BTSerial.begin(9600); // Initialize BTSerial
   Serial.begin(9600);
   pinMode(relayPin, OUTPUT);
   digitalWrite(relayPin, HIGH); // Circuit is initially ON
@@ -57,16 +50,15 @@ void loop() {
       Serial.println("Circuit Tripped Manually");
     } else if (incomingCommand == '1') { // RESET
       digitalWrite(relayPin, HIGH); // close the relay (reset the circuit)
-      circuitTripped = false;      //reset tripped flag
+      circuitTripped = false;      // reset tripped flag
       Serial.println("Circuit Reset Manually");
     } else {
       Serial.println("Invalid command.");
     }
 
-    while (Serial.available() > 0) { //clear the input buffer.
+    while (Serial.available() > 0) { // clear the input buffer
       Serial.read();
     }
   }
-
-  delay(100); // Increased delay for better readability and stability.
+  delay(100);
 }
