@@ -1,6 +1,6 @@
 int dcLoad_sensorPin = A0; // DC Load sensor on A0
 int dcArduino_sensorPin = A1; // DC Arduino sensor on A1 (replacing AC sensor)
-int relayPin = 2;
+int mosfetPin = 2; // Changed from transistorPin to mosfetPin
 bool circuitTripped = false;
 
 // Calibration values (replace with your actual calibration data)
@@ -10,13 +10,15 @@ float dcLoad_VoltageIntercept = 0.0;  // Example: intercept from calibration for
 float dcArduino_VoltageSlope = 0.02445;  // Example: slope from calibration for the arduino sensor
 float dcArduino_VoltageIntercept = 0.0;  // Example: intercept from calibration for the arduino sensor
 
-// Voltage threshold for automatic circuit closure
-float autoCloseVoltageThreshold = 6.0; // Set the threshold to 3.5V
+// Voltage thresholds for automatic circuit closure with hysteresis
+float autoCloseVoltageThresholdHigh = 6.0; // Upper threshold to close the circuit (turn ON the MOSFET)
+float autoCloseVoltageThresholdLow = 5.5;  // Lower threshold to open the circuit (turn OFF the MOSFET)
+// Hysteresis is the difference between these two values (0.5V in this case)
 
 void setup() {
   Serial.begin(9600);
-  pinMode(relayPin, OUTPUT);
-  digitalWrite(relayPin, HIGH); // Circuit is initially ON
+  pinMode(mosfetPin, OUTPUT);
+  digitalWrite(mosfetPin, HIGH); // Circuit is initially ON
 }
 
 void loop() {
@@ -33,23 +35,31 @@ void loop() {
   Serial.print("Arduino Voltage: ");
   Serial.println(dcArduino_voltage);
 
-  // Automatic Circuit Closure Logic
-  if (!circuitTripped && dcArduino_voltage >= autoCloseVoltageThreshold) {
-    digitalWrite(relayPin, HIGH); // Close the relay (reset the circuit) - Changed to HIGH to match initial state on reset.
-    circuitTripped = true;      // Set tripped flag
-    Serial.println("Circuit Auto-Closed (Voltage above threshold)");
+  // Automatic Circuit Closure Logic with Hysteresis (MOSFET Control)
+  if (circuitTripped == false) { // If the circuit is not tripped (MOSFET is OFF)
+    if (dcLoad_voltage >= autoCloseVoltageThresholdHigh) {
+      digitalWrite(mosfetPin, HIGH); // Turn ON the MOSFET (close the circuit)
+      circuitTripped = true;      // Set tripped flag
+      Serial.println("Circuit Auto-Closed (Voltage above high threshold)");
+    }
+  } else { // If the circuit is tripped (MOSFET is ON)
+    if (dcLoad_voltage <= autoCloseVoltageThresholdLow) {
+      digitalWrite(mosfetPin, LOW); // Turn OFF the MOSFET (open the circuit)
+      circuitTripped = false;      // Reset tripped flag
+      Serial.println("Circuit Auto-Opened (Voltage below low threshold)");
+    }
   }
 
-  // Manual Trip/Reset
+  // Manual Trip/Reset (MOSFET Control)
   if (Serial.available() > 0) {
     char incomingCommand = Serial.read();
 
     if (incomingCommand == '0' && !circuitTripped) { // TRIP
-      digitalWrite(relayPin, LOW); // Open the relay (trip the circuit)
+      digitalWrite(mosfetPin, HIGH); // Turn ON the MOSFET (close the circuit)
       circuitTripped = true;      // Set the flag so it doesn't keep tripping
       Serial.println("Circuit Tripped Manually");
     } else if (incomingCommand == '1') { // RESET
-      digitalWrite(relayPin, HIGH); // close the relay (reset the circuit)
+      digitalWrite(mosfetPin, LOW); // Turn OFF the MOSFET (open the circuit)
       circuitTripped = false;      // reset tripped flag
       Serial.println("Circuit Reset Manually");
     } else {
