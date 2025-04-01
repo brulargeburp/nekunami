@@ -11,8 +11,8 @@ float dcArduino_VoltageSlope = 0.02445;  // Example: slope from calibration for 
 float dcArduino_VoltageIntercept = 0.0;  // Example: intercept from calibration for the arduino sensor
 
 // Voltage thresholds for automatic circuit closure with hysteresis
-float autoCloseVoltageThresholdHigh = 6.0; // Upper threshold to open the circuit (turn ON the MOSFET)
-float autoCloseVoltageThresholdLow = 5.5;  // Lower threshold to close the circuit (turn OFF the MOSFET)
+float autoCloseVoltageThresholdHigh = 5.0; // Upper threshold to open the circuit (turn ON the MOSFET)
+float autoCloseVoltageThresholdLow = 3.0;  // Lower threshold to close the circuit (turn OFF the MOSFET)
 // Hysteresis is the difference between these two values (0.5V in this case)
 
 void setup() {
