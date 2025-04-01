@@ -11,8 +11,8 @@ float dcArduino_VoltageSlope = 0.02445;  // Example: slope from calibration for 
 float dcArduino_VoltageIntercept = 0.0;  // Example: intercept from calibration for the arduino sensor
 
 // Voltage thresholds for automatic circuit closure with hysteresis
-float autoCloseVoltageThresholdHigh = 6.0; // Upper threshold to close the circuit (turn ON the MOSFET)
-float autoCloseVoltageThresholdLow = 5.5;  // Lower threshold to open the circuit (turn OFF the MOSFET)
+float autoCloseVoltageThresholdHigh = 6.0; // Upper threshold to open the circuit (turn ON the MOSFET)
+float autoCloseVoltageThresholdLow = 5.5;  // Lower threshold to close the circuit (turn OFF the MOSFET)
 // Hysteresis is the difference between these two values (0.5V in this case)
 
 void setup() {
@@ -38,13 +38,13 @@ void loop() {
   // Automatic Circuit Closure Logic with Hysteresis (MOSFET Control)
   if (circuitTripped == false) { // If the circuit is not tripped (MOSFET is OFF)
     if (dcLoad_voltage >= autoCloseVoltageThresholdHigh) {
-      digitalWrite(mosfetPin, HIGH); // Turn ON the MOSFET (close the circuit)
+      digitalWrite(mosfetPin, HIGH); // Turn ON the MOSFET (open the circuit)
       circuitTripped = true;      // Set tripped flag
       Serial.println("Circuit Auto-Closed (Voltage above high threshold)");
     }
   } else { // If the circuit is tripped (MOSFET is ON)
     if (dcLoad_voltage <= autoCloseVoltageThresholdLow) {
-      digitalWrite(mosfetPin, LOW); // Turn OFF the MOSFET (open the circuit)
+      digitalWrite(mosfetPin, LOW); // Turn OFF the MOSFET (close the circuit)
       circuitTripped = false;      // Reset tripped flag
       Serial.println("Circuit Auto-Opened (Voltage below low threshold)");
     }
@@ -54,7 +54,7 @@ void loop() {
   if (Serial.available() > 0) {
     char incomingCommand = Serial.read();
 
-    if (incomingCommand == '0' && !circuitTripped) { // TRIP
+    if (incomingCommand == '0' && !circuitTripped) { // TRIP (!circuitTripped is same as circuitTripped == false)
       digitalWrite(mosfetPin, HIGH); // Turn ON the MOSFET (close the circuit)
       circuitTripped = true;      // Set the flag so it doesn't keep tripping
       Serial.println("Circuit Tripped Manually");
