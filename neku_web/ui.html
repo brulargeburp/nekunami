@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Circuit Breaker Control</title>
+    <link rel="icon" href="favicon.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --primary-color: #00ff7f; /* Neon Green */
+            --secondary-color: #444;
+            --off-color: #ff4141;
+            --on-color: #00ff7f;
+            --text-color: #f0f0f0;
+            --font-display: 'Orbitron', sans-serif;
+            --font-body: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-body);
+            display: flex;
+            justify-content: center;
+            margin: 0;
+            overflow: auto;
+            padding-top: 40px;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            padding: 40px;
+        }
+
+        .container {
+            background-color: #282828;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 127, 0.2);
+            text-align: center;
+            width: 100%;
+            max-width: 350px;
+            border: 1px solid var(--primary-color);
+            min-height: 380px;
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: 1.5em;
+        }
+
+        .breaker-status {
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            font-family: var(--font-display);
+        }
+
+        #status-text {
+            transition: color 0.3s ease;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 25px;
+            font-size: 1em;
+            font-family: var(--font-display);
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-on {
+            background-color: var(--on-color);
+            box-shadow: 0 0 15px var(--on-color);
+        }
+
+        .btn-on:hover {
+            background-color: #2cff94;
+        }
+
+        .btn-off {
+            background-color: var(--off-color);
+            box-shadow: 0 0 15px var(--off-color);
+        }
+
+        .btn-off:hover {
+            background-color: #ff6b6b;
+        }
+
+        .readings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .voltage-display {
+            background-color: var(--bg-color);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--secondary-color);
+        }
+
+        .voltage-display h3 {
+            margin: 0 0 10px;
+            font-family: var(--font-body);
+            font-weight: 300;
+            color: var(--text-color);
+            text-transform: uppercase;
+            font-size: 0.8em;
+        }
+
+        .voltage-value {
+            font-family: var(--font-display);
+            font-size: 2em;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="container">
+            <h1>Overall Breaker</h1>
+            <div class="breaker-status">
+                STATUS: <span class="status-text">OFF</span>
+            </div>
+            <div class="controls">
+                <button class="btn btn-on">ON</button>
+                <button class="btn btn-off">OFF</button>
+            </div>
+            <div class="readings">
+                <div class="voltage-display">
+                    <h3>System Voltage</h3>
+                    <div class="voltage-value system-voltage">0.00 V</div>
+                </div>
+                <div class="voltage-display">
+                    <h3>Total Load</h3>
+                    <div class="voltage-value load-voltage">0.00 V</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <h1>Load 1</h1>
+            <div class="breaker-status">
+                STATUS: <span class="status-text">OFF</span>
+            </div>
+            <div class="controls">
+                <button class="btn btn-on">ON</button>
+                <button class="btn btn-off">OFF</button>
+            </div>
+            <div class="readings">
+                <div class="voltage-display">
+                    <h3>Input Voltage</h3>
+                    <div class="voltage-value system-voltage">0.00 V</div>
+                </div>
+                <div class="voltage-display">
+                    <h3>Load Voltage</h3>
+                    <div class="voltage-value load-voltage">0.00 V</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <h1>Load 2</h1>
+            <div class="breaker-status">
+                STATUS: <span class="status-text">OFF</span>
+            </div>
+            <div class="controls">
+                <button class="btn btn-on">ON</button>
+                <button class="btn btn-off">OFF</button>
+            </div>
+            <div class="readings">
+                <div class="voltage-display">
+                    <h3>Input Voltage</h3>
+                    <div class="voltage-value system-voltage">0.00 V</div>
+                </div>
+                <div class="voltage-display">
+                    <h3>Load Voltage</h3>
+                    <div class="voltage-value load-voltage">0.00 V</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <h1>Load 3</h1>
+            <div class="breaker-status">
+                STATUS: <span class="status-text">OFF</span>
+            </div>
+            <div class="controls">
+                <button class="btn btn-on">ON</button>
+                <button class="btn btn-off">OFF</button>
+            </div>
+            <div class="readings">
+                <div class="voltage-display">
+                    <h3>Input Voltage</h3>
+                    <div class="voltage-value system-voltage">0.00 V</div>
+                </div>
+                <div class="voltage-display">
+                    <h3>Load Voltage</h3>
+                    <div class="voltage-value load-voltage">0.00 V</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Dashboard {
+            constructor(container, isOverall = false) {
+                this.container = container;
+                this.isOverall = isOverall;
+                this.statusText = container.querySelector('.status-text');
+                this.btnOn = container.querySelector('.btn-on');
+                this.btnOff = container.querySelector('.btn-off');
+                this.systemVoltageDisplay = container.querySelector('.system-voltage');
+                this.loadVoltageDisplay = container.querySelector('.load-voltage');
+
+                this.isOn = false;
+                this.voltageInterval = null;
+
+                this.btnOn.addEventListener('click', () => this.setOn());
+                this.btnOff.addEventListener('click', () => this.setOff());
+
+                this.updateStatus();
+            }
+
+            updateStatus() {
+                if (this.isOn) {
+                    this.statusText.textContent = 'ON';
+                    this.statusText.style.color = 'var(--on-color)';
+                    this.startVoltageReadings();
+                } else {
+                    this.statusText.textContent = 'OFF';
+                    this.statusText.style.color = 'var(--off-color)';
+                    this.stopVoltageReadings();
+                }
+            }
+
+            setOn() {
+                if (this.isOverall || dashboards[0].isOn) {
+                    this.isOn = true;
+                    this.updateStatus();
+                    if (this.isOverall) {
+                        updateOverallLoad();
+                    }
+                }
+            }
+
+            setOff() {
+                this.isOn = false;
+                this.updateStatus();
+                if (this.isOverall) {
+                    dashboards.slice(1).forEach(d => d.setOff());
+                }
+                updateOverallLoad();
+            }
+
+
+
+            startVoltageReadings() {
+                if (this.voltageInterval) clearInterval(this.voltageInterval);
+                this.voltageInterval = setInterval(() => {
+                    const systemVoltage = 12.0 + (Math.random() * 0.5 - 0.25);
+                    const loadVoltage = this.isOn ? 11.8 + (Math.random() * 0.5 - 0.25) : 0;
+                    
+                    if (this.isOverall) {
+                        this.systemVoltageDisplay.textContent = systemVoltage.toFixed(2) + ' V';
+                    } else {
+                        this.systemVoltageDisplay.textContent = dashboards[0].isOn ? systemVoltage.toFixed(2) + ' V' : '0.00 V';
+                        this.loadVoltageDisplay.textContent = this.isOn ? loadVoltage.toFixed(2) + ' V' : '0.00 V';
+                    }
+                    if(this.isOn && !this.isOverall) updateOverallLoad();
+
+                }, 1000);
+            }
+
+            stopVoltageReadings() {
+                if (this.voltageInterval) clearInterval(this.voltageInterval);
+                this.voltageInterval = null;
+                if (!this.isOverall) {
+                    this.systemVoltageDisplay.textContent = '0.00 V';
+                }
+                this.loadVoltageDisplay.textContent = '0.00 V';
+            }
+        }
+
+        const dashboardElements = document.querySelectorAll('.container');
+        const dashboards = Array.from(dashboardElements).map((el, i) => new Dashboard(el, i === 0));
+
+        function updateOverallLoad() {
+            let totalLoad = 0;
+            dashboards.slice(1).forEach(d => {
+                if (d.isOn) {
+                    totalLoad += parseFloat(d.loadVoltageDisplay.textContent);
+                }
+            });
+            dashboards[0].loadVoltageDisplay.textContent = totalLoad.toFixed(2) + ' V';
+        }
+        
+        // Initial state
+        dashboards[0].startVoltageReadings();
+
+    </script>
+
+</body>
+</html>
