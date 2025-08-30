@@ -1,3 +1,4 @@
+
 /**
  * Neku-Nami Control Panel Firmware (Current-Based)
  * 
@@ -8,6 +9,12 @@
  * 
  * --- Web App Communication Protocol ---
  * 
+ * Note on Admin Mode: The "Admin Mode" password lock is a client-side safety 
+ * feature implemented purely within the web application. It prevents the app 
+ * from sending 'Set Min/Max Current' commands unless unlocked. The firmware 
+ * itself does not have an admin state and will process these commands at any 
+ * time if they are received.
+ *
  * ---> Outgoing Data Packet to Web App (17 bytes) --->
  * Byte 0:    Status Mask (Bit 0: Overall, Bit 1: Load 1, Bit 2: Load 2)
  * Bytes 1-4:   System Current (float in Amperes)
@@ -25,6 +32,11 @@
  *    Byte 0: Command Type (0x02)
  *    Byte 1: Breaker Index (1-2)
  *    Bytes 2-5: Max Current (float in Amperes)
+ * 
+ * 3. Set Min Current (6 bytes):
+ *    Byte 0: Command Type (0x03)
+ *    Byte 1: Breaker Index (1-2)
+ *    Bytes 2-5: Min Current (float in Amperes)
  */
 
 // --- Pin Definitions (assuming ammeters like ACS712) ---
@@ -37,10 +49,12 @@ const int transistorPinLoad2 = 4;
 // --- Command Definitions ---
 const uint8_t CMD_TOGGLE_STATE = 0x01;
 const uint8_t CMD_SET_MAX_CURRENT = 0x02;
+const uint8_t CMD_SET_MIN_CURRENT = 0x03;
 
 // --- State Management ---
 bool breakerIsOn[3] = {false, false, false};
 float maxCurrents[3] = {0.0, 5.0, 5.0}; // Default max current for Loads 1 & 2 is 5.0A
+float minCurrents[3] = {0.0, 0.1, 0.1}; // Default min current for Loads 1 & 2 is 0.1A
 
 // --- Calibration Values (example for ACS712-20A) ---
 // VCC/2 offset, i.e., 2.5V for 0A on a 5V Arduino
@@ -97,13 +111,21 @@ void handleSerialCommands() {
       Serial.readBytes(payload, 5);
       int breakerIndex = payload[0];
 
-      if (breakerIndex > 0 && breakerIndex < 3) { // Only for loads 1-2
-        union {
-          float f;
-          uint8_t bytes[4];
-        } converter;
+      if (breakerIndex > 0 && breakerIndex < 3) {
+        union { float f; uint8_t bytes[4]; } converter;
         memcpy(converter.bytes, &payload[1], 4);
         maxCurrents[breakerIndex] = converter.f;
+      }
+    }
+    else if (commandType == CMD_SET_MIN_CURRENT && Serial.available() >= 5) {
+      uint8_t payload[5];
+      Serial.readBytes(payload, 5);
+      int breakerIndex = payload[0];
+
+      if (breakerIndex > 0 && breakerIndex < 3) {
+        union { float f; uint8_t bytes[4]; } converter;
+        memcpy(converter.bytes, &payload[1], 4);
+        minCurrents[breakerIndex] = converter.f;
       }
     }
   }
@@ -112,11 +134,16 @@ void handleSerialCommands() {
 void updateBreakerLogic() {
   float dcLoad_current = readCurrent(dcLoad_currentSensorPin);
 
-  // Auto-trip logic for "Load 1" using the dynamic max current
-  // If current exceeds the set maximum, the breaker is tripped (turned off).
-  // It will NOT automatically turn back on. A user command is required.
-  if (breakerIsOn[1] && dcLoad_current >= maxCurrents[1]) {
-    setBreakerState(1, false); // Trip the breaker
+  // Auto-trip logic for "Load 1"
+  if (breakerIsOn[1]) {
+    // Overload Trip: current is too high.
+    if (dcLoad_current >= maxCurrents[1]) {
+      setBreakerState(1, false);
+    }
+    // Underload/Short-Circuit Trip: current is too low (but not zero).
+    else if (dcLoad_current > 0 && dcLoad_current < minCurrents[1]) {
+      setBreakerState(1, false);
+    }
   }
   // This logic could be expanded for other loads if they get physical sensors.
 }
